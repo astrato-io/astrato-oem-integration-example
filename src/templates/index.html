@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Centered Iframe Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: #f4f4f4;
+      }
+
+      header {
+        display: flex;
+        flex-direction: row;
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+      }
+
+      header button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 8px 16px;
+        border: none;
+        cursor: pointer;
+        margin: 5px;
+      }
+
+      header button:hover {
+        background-color: #45a049;
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      iframe {
+        border: none;
+        width: 100%;
+        height: 80vh;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+      }
+
+      p.flex-grow-1 {
+        flex-grow: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <p class="flex-grow-1">Hello {{USER}}</p>
+      <button onclick="logout()">Logout</button>
+    </header>
+
+    <main>
+      <iframe src="{{ASTRATO_EMBED_LINK}}" frameborder="0"></iframe>
+    </main>
+
+    <footer>
+      <p>Featured by Astrato Analytics</p>
+    </footer>
+
+    <script>
+      const ASTRATO_URL = "{{ASTRATO_URL}}";
+      const iframe = document.querySelector("iframe");
+      let debounceTimer = null;
+
+      function logout() {
+        window.location.href = "/logout";
+      }
+
+      function debounce(func, delay) {
+        return function (...args) {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => func.apply(this, args), delay);
+        };
+      }
+
+      // Handle 401 error from Astrato
+      async function handleAstrato401Error() {
+        try {
+          const reloginResponse = await fetch("/external-relogin", {
+            method: "POST",
+            credentials: "include"
+          });
+          
+          if (!reloginResponse.ok) {
+            throw new Error(`Relogin failed: ${reloginResponse.status}`);
+          }
+          
+          const reloginData = await reloginResponse.json();
+          
+          const ticketResponse = await fetch(
+            `${ASTRATO_URL}auth/proxy/oem/ticket/${reloginData.ticketId}?embed`,
+            {
+              credentials: "include"
+            }
+          );
+          
+          if (!ticketResponse.ok) {
+            throw new Error(`Ticket validation failed: ${ticketResponse.status}`);
+          }
+          
+          iframe.src = iframe.src;
+          
+        } catch (error) {
+          console.error("Error handling Astrato 401:", error);
+        }
+      }
+
+      const debouncedErrorHandler = debounce(handleAstrato401Error, 400);
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "Astrato" && event.data?.message === "401Error") {
+          debouncedErrorHandler();
+        }
+      });
+    </script>
+
+    {{{TICKET_SCRIPT}}}
+  </body>
+</html>

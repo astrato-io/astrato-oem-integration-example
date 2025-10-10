@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .login-container {
+        box-sizing: border-box;
+        background-color: #fff;
+        padding: 20px 50px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 500px;
+        max-width: 100%;
+      }
+
+      .login-container h2 {
+        color: #333;
+        margin-bottom: 40px;
+      }
+
+      .login-form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+        min-height: 50px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #555;
+        font-weight: bold;
+      }
+
+      .form-group input {
+        width: 100%;
+        border: 1px solid #ddd;
+        padding: 10px;
+        height: 40px;
+        box-sizing: border-box;
+      }
+
+      .form-group input[type="submit"] {
+        background-color: #4caf50;
+        color: #fff;
+        cursor: pointer;
+        width: 120px;
+        align-self: flex-end;
+        margin-top: 20px;
+      }
+
+      .form-group input[type="submit"]:hover {
+        background-color: #45a049;
+      }
+
+      .form-group .register-link {
+        margin-top: 10px;
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .form-group .register-link:hover {
+        text-decoration: underline;
+      }
+
+      .config-section {
+        border-top: 1px solid #ddd;
+        margin-top: 20px;
+        padding-top: 20px;
+      }
+
+      .config-section h3 {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      .optional-label {
+        color: #888;
+        font-size: 12px;
+        font-weight: normal;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <h2>Login</h2>
+      <form class="login-form" action="/login" method="post">
+        <div class="form-group">
+          <label for="email">Please provide email address:</label>
+          <input type="text" id="email" name="email" required />
+        </div>
+
+        <div class="config-section">
+          <h3>Astrato Configuration (Optional)</h3>
+          <div class="form-group">
+            <label for="astrato_url">Astrato URL <span class="optional-label">(optional)</span></label>
+            <input type="url" id="astrato_url" name="astrato_url" placeholder="https://your-astrato-instance.com" />
+          </div>
+          <div class="form-group">
+            <label for="astrato_client_id">Client ID <span class="optional-label">(optional)</span></label>
+            <input type="text" id="astrato_client_id" name="astrato_client_id" placeholder="Your Astrato Client ID" />
+          </div>
+          <div class="form-group">
+            <label for="astrato_client_secret">Client Secret <span class="optional-label">(optional)</span></label>
+            <input type="password" id="astrato_client_secret" name="astrato_client_secret" placeholder="Your Astrato Client Secret" />
+          </div>
+          <div class="form-group">
+            <label for="astrato_embed_link">Embed Link <span class="optional-label">(optional)</span></label>
+            <input type="url" id="astrato_embed_link" name="astrato_embed_link" placeholder="https://your-astrato-instance.com/embed/..." />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <input type="submit" value="Login" />
+        </div>
+      </form>
+    </div>
+
+    <script>
+      // Load saved configuration from localStorage
+      function loadSavedConfig() {
+        const config = {
+          astrato_url: localStorage.getItem('astrato_url') || '',
+          astrato_client_id: localStorage.getItem('astrato_client_id') || '',
+          astrato_client_secret: localStorage.getItem('astrato_client_secret') || '',
+          astrato_embed_link: localStorage.getItem('astrato_embed_link') || ''
+        };
+
+        // Populate form fields
+        Object.keys(config).forEach(key => {
+          const input = document.getElementById(key);
+          if (input) {
+            input.value = config[key];
+          }
+        });
+      }
+
+      // Save configuration to localStorage when form is submitted
+      function saveConfig() {
+        const config = {
+          astrato_url: document.getElementById('astrato_url').value,
+          astrato_client_id: document.getElementById('astrato_client_id').value,
+          astrato_client_secret: document.getElementById('astrato_client_secret').value,
+          astrato_embed_link: document.getElementById('astrato_embed_link').value
+        };
+
+        // Only save non-empty values
+        Object.keys(config).forEach(key => {
+          if (config[key]) {
+            localStorage.setItem(key, config[key]);
+          } else {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
+      // Load saved config when page loads
+      document.addEventListener('DOMContentLoaded', loadSavedConfig);
+
+      // Save config when form is submitted
+      document.querySelector('.login-form').addEventListener('submit', saveConfig);
+    </script>
+  </body>
+</html>
