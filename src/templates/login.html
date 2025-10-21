@@ -71,6 +71,26 @@
         background-color: #45a049;
       }
 
+      .form-group textarea {
+        width: 100%;
+        border: 1px solid #ddd;
+        padding: 10px;
+        box-sizing: border-box;
+        font-family: monospace;
+        resize: vertical;
+      }
+
+      .form-group input[type="checkbox"] {
+        margin-right: 8px;
+        width: auto;
+      }
+
+      .form-group label:has(input[type="checkbox"]) {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+
       .form-group .register-link {
         margin-top: 10px;
         color: #007bff;
@@ -114,20 +134,88 @@
         <div class="config-section">
           <h3>Astrato Configuration (Optional)</h3>
           <div class="form-group">
-            <label for="astrato_url">Astrato URL <span class="optional-label">(optional)</span></label>
-            <input type="url" id="astrato_url" name="astrato_url" placeholder="https://your-astrato-instance.com" />
+            <label for="astrato_url"
+              >Astrato URL <span class="optional-label">(optional)</span></label
+            >
+            <input
+              type="url"
+              id="astrato_url"
+              name="astrato_url"
+              placeholder="https://your-astrato-instance.com"
+            />
           </div>
           <div class="form-group">
-            <label for="astrato_client_id">Client ID <span class="optional-label">(optional)</span></label>
-            <input type="text" id="astrato_client_id" name="astrato_client_id" placeholder="Your Astrato Client ID" />
+            <label for="astrato_client_id"
+              >Client ID <span class="optional-label">(optional)</span></label
+            >
+            <input
+              type="text"
+              id="astrato_client_id"
+              name="astrato_client_id"
+              placeholder="Your Astrato Client ID"
+            />
           </div>
           <div class="form-group">
-            <label for="astrato_client_secret">Client Secret <span class="optional-label">(optional)</span></label>
-            <input type="password" id="astrato_client_secret" name="astrato_client_secret" placeholder="Your Astrato Client Secret" />
+            <label for="astrato_client_secret"
+              >Client Secret
+              <span class="optional-label">(optional)</span></label
+            >
+            <input
+              type="password"
+              id="astrato_client_secret"
+              name="astrato_client_secret"
+              placeholder="Your Astrato Client Secret"
+            />
           </div>
           <div class="form-group">
-            <label for="astrato_embed_link">Embed Link <span class="optional-label">(optional)</span></label>
-            <input type="url" id="astrato_embed_link" name="astrato_embed_link" placeholder="https://your-astrato-instance.com/embed/..." />
+            <label for="astrato_embed_link"
+              >Embed Link <span class="optional-label">(optional)</span></label
+            >
+            <input
+              type="url"
+              id="astrato_embed_link"
+              name="astrato_embed_link"
+              placeholder="https://your-astrato-instance.com/embed/..."
+            />
+          </div>
+          <div class="form-group">
+            <label for="group_ids"
+              >Group IDs
+              <span class="optional-label"
+                >(optional, comma-separated)</span
+              ></label
+            >
+            <input
+              type="text"
+              id="group_ids"
+              name="group_ids"
+              placeholder="group1,group2,group3"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="filter_parameters"
+              >Filter Parameters
+              <span class="optional-label">(optional, JSON format)</span></label
+            >
+            <textarea
+              id="filter_parameters"
+              name="filter_parameters"
+              rows="4"
+              placeholder='{"key1": "value1", "key2": "value2"}'
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input
+                type="checkbox"
+                id="apply_pending_invites"
+                name="apply_pending_invites"
+                value="true"
+              />
+              Apply Pending Invites
+            </label>
           </div>
         </div>
 
@@ -141,17 +229,26 @@
       // Load saved configuration from localStorage
       function loadSavedConfig() {
         const config = {
-          astrato_url: localStorage.getItem('astrato_url') || '',
-          astrato_client_id: localStorage.getItem('astrato_client_id') || '',
-          astrato_client_secret: localStorage.getItem('astrato_client_secret') || '',
-          astrato_embed_link: localStorage.getItem('astrato_embed_link') || ''
+          astrato_url: localStorage.getItem("astrato_url") || "",
+          astrato_client_id: localStorage.getItem("astrato_client_id") || "",
+          astrato_client_secret:
+            localStorage.getItem("astrato_client_secret") || "",
+          astrato_embed_link: localStorage.getItem("astrato_embed_link") || "",
+          group_ids: localStorage.getItem("group_ids") || "",
+          filter_parameters: localStorage.getItem("filter_parameters") || "",
+          apply_pending_invites:
+            localStorage.getItem("apply_pending_invites") === "true",
         };
 
         // Populate form fields
-        Object.keys(config).forEach(key => {
+        Object.keys(config).forEach((key) => {
           const input = document.getElementById(key);
           if (input) {
-            input.value = config[key];
+            if (input.type === "checkbox") {
+              input.checked = config[key];
+            } else {
+              input.value = config[key];
+            }
           }
         });
       }
@@ -159,15 +256,23 @@
       // Save configuration to localStorage when form is submitted
       function saveConfig() {
         const config = {
-          astrato_url: document.getElementById('astrato_url').value,
-          astrato_client_id: document.getElementById('astrato_client_id').value,
-          astrato_client_secret: document.getElementById('astrato_client_secret').value,
-          astrato_embed_link: document.getElementById('astrato_embed_link').value
+          astrato_url: document.getElementById("astrato_url").value,
+          astrato_client_id: document.getElementById("astrato_client_id").value,
+          astrato_client_secret: document.getElementById(
+            "astrato_client_secret"
+          ).value,
+          astrato_embed_link:
+            document.getElementById("astrato_embed_link").value,
+          group_ids: document.getElementById("group_ids").value,
+          filter_parameters: document.getElementById("filter_parameters").value,
+          apply_pending_invites: document.getElementById(
+            "apply_pending_invites"
+          ).checked,
         };
 
         // Only save non-empty values
-        Object.keys(config).forEach(key => {
-          if (config[key]) {
+        Object.keys(config).forEach((key) => {
+          if (config[key] || key === "apply_pending_invites") {
             localStorage.setItem(key, config[key]);
           } else {
             localStorage.removeItem(key);
@@ -176,10 +281,12 @@
       }
 
       // Load saved config when page loads
-      document.addEventListener('DOMContentLoaded', loadSavedConfig);
+      document.addEventListener("DOMContentLoaded", loadSavedConfig);
 
       // Save config when form is submitted
-      document.querySelector('.login-form').addEventListener('submit', saveConfig);
+      document
+        .querySelector(".login-form")
+        .addEventListener("submit", saveConfig);
     </script>
   </body>
 </html>
