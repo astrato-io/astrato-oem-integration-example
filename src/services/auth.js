@@ -9,10 +9,7 @@ async function getManagementApiToken(config = {}) {
 
     const response = await axios.post(
       `${astratoUrl}auth/proxy/m2m/token`,
-      {
-        clientId,
-        clientSecret,
-      },
+      { clientId, clientSecret },
       {
         headers: { "Content-Type": "application/json" },
       }
@@ -25,16 +22,25 @@ async function getManagementApiToken(config = {}) {
   }
 }
 
-async function getSessionTicket(accessToken, email, groupIds = [], config = {}) {
+async function getSessionTicket(accessToken, email, groupIds = [], config = {}, applyPendingInvites = false, filterParameters = null) {
   try {
     const astratoUrl = config.astratoUrl || process.env.ASTRATO_URL;
     
+    // Build the request body with all parameters
+    const requestBody = {
+      email,
+      groupIds,
+      applyPendingInvites
+    };
+
+    // Add filterParameters only if provided
+    if (filterParameters !== null) {
+      requestBody.filterParameters = filterParameters;
+    }
+    
     const response = await axios.post(
       `${astratoUrl}oem/setup`,
-      {
-        email,
-        groupIds,
-      },
+      requestBody,
       {
         headers: {
           "Content-Type": "application/json",

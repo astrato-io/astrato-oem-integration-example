@@ -45,11 +45,14 @@ router.get("/logout", (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const email = req.body.email;
-  const astratoUrl = req.body.astrato_url;
-  const clientId = req.body.astrato_client_id;
-  const clientSecret = req.body.astrato_client_secret;
-  const embedLink = req.body.astrato_embed_link;
+  const email = req.body?.email;
+  const astratoUrl = req.body?.astrato_url;
+  const clientId = req.body?.astrato_client_id;
+  const clientSecret = req.body?.astrato_client_secret;
+  const embedLink = req.body?.astrato_embed_link;
+  const groupIds = req.body?.group_ids;
+  const filterParameters = req.body?.filter_parameters;
+  const applyPendingInvites = req.body?.apply_pending_invites === 'true';
 
   if (email) {
     try {
@@ -72,12 +75,89 @@ router.post("/login", async (req, res) => {
         clientSecret: clientSecret || process.env.ASTRATO_CLIENT_SECRET
       };
 
+      // Process groupIds - split by comma and trim whitespace
+      const processedGroupIds = groupIds 
+        ? groupIds.split(',').map(id => id.trim()).filter(id => id.length > 0)
+        : [];
+
+      // Process filterParameters - parse JSON if provided
+      let processedFilterParameters = null;
+      if (filterParameters && filterParameters.trim()) {
+        try {
+          processedFilterParameters = JSON.parse(filterParameters);
+        } catch (error) {
+          logMessage(`Invalid JSON in filterParameters: ${error.message}`);
+          return res.status(400).send(`Invalid JSON in filter parameters: ${error.message}`);
+        }
+      }
+
       const managementToken = await getManagementApiToken(config);
-      req.session.ticketId = await getSessionTicket(managementToken, email, [], config);
+      req.session.ticketId = await getSessionTicket(
+        managementToken, 
+        email, 
+        processedGroupIds, 
+        config,
+        applyPendingInvites,
+        processedFilterParameters
+      );
+      
       res.redirect("/");
     } catch (error) {
       logMessage(`Login error: ${error.message}`);
-      res.status(500).send(`Login failed: ${error.message}`);
+      
+      // Build comprehensive error details
+      const errorDetails = {
+        message: error.message,
+        timestamp: new Date().toISOString(),
+        request: {
+          email: email,
+          astratoUrl: astratoUrl || process.env.ASTRATO_URL,
+          clientIdProvided: clientId ? true : false,
+          clientSecretProvided: clientSecret ? true : false,
+          embedLink: embedLink,
+          groupIds: groupIds,
+          filterParameters: filterParameters,
+          applyPendingInvites: applyPendingInvites
+        }
+      };
+      
+      if (error.response) {
+        errorDetails.apiResponse = error.response.data;
+        errorDetails.apiUrl = error.config?.url;
+        errorDetails.apiMethod = error.config?.method?.toUpperCase();
+        errorDetails.apiStatus = error.response.status;
+      }
+      
+      // Prepare template data
+      const templateData = {
+        TIMESTAMP: errorDetails.timestamp,
+        ERROR_MESSAGE: error.message,
+        REQUEST_EMAIL: email,
+        REQUEST_ASTRATO_URL: astratoUrl || process.env.ASTRATO_URL,
+        REQUEST_CLIENT_ID_STATUS: clientId ? '✓ Provided' : '✗ Not provided',
+        REQUEST_CLIENT_SECRET_STATUS: clientSecret ? '✓ Provided' : '✗ Not provided',
+        REQUEST_EMBED_LINK: embedLink || 'Not provided',
+        REQUEST_GROUP_IDS: groupIds || 'Not provided',
+        REQUEST_FILTER_PARAMETERS: filterParameters || 'Not provided',
+        REQUEST_APPLY_PENDING_INVITES: applyPendingInvites ? 'Yes' : 'No',
+        ERROR_DETAILS_JSON: JSON.stringify(errorDetails),
+        HAS_API_ERROR: error.response ? true : false
+      };
+      
+      // Add API error details if available
+      if (error.response) {
+        templateData.API_STATUS = errorDetails.apiStatus;
+        templateData.API_METHOD = errorDetails.apiMethod || 'N/A';
+        templateData.API_URL = errorDetails.apiUrl || 'N/A';
+        templateData.API_MESSAGE = errorDetails.apiResponse?.message;
+        templateData.API_CODE = errorDetails.apiResponse?.code;
+        templateData.API_CORRELATION_ID = errorDetails.apiResponse?.correlationId;
+        templateData.API_RESPONSE_JSON = JSON.stringify(errorDetails.apiResponse, null, 2);
+      }
+      
+      // Render error page using template
+      const errorHtml = await renderTemplate('error', templateData);
+      res.status(500).send(errorHtml);
     }
   } else {
     res.status(400).send("Invalid email");
@@ -99,7 +179,9 @@ router.post("/external-relogin", async (req, res) => {
         managementToken,
         req.session.user,
         [],
-        config
+        config,
+        false, // applyPendingInvites - default to false for external relogin
+        null   // filterParameters - default to null for external relogin
       );
       res.json({ ticketId });
     } catch (error) {

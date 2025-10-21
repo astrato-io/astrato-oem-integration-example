@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Error</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .error-container {
+        background-color: #fff;
+        padding: 30px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 900px;
+        width: 100%;
+        border-left: 5px solid #dc3545;
+      }
+      h1 {
+        color: #dc3545;
+        margin-top: 0;
+      }
+      .error-section {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+      .error-section h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      pre {
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        font-size: 12px;
+      }
+      .button-group {
+        margin-top: 30px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      a,
+      button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      a:hover,
+      button:hover {
+        background-color: #0056b3;
+      }
+      .timestamp {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .info-label {
+        font-weight: bold;
+        color: #555;
+      }
+      .info-value {
+        color: #333;
+        word-break: break-all;
+      }
+      ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+      li {
+        margin: 8px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="error-container">
+      <h1>🚫 Login Failed</h1>
+      <p class="timestamp">Timestamp: {{TIMESTAMP}}</p>
+
+      <div class="error-section">
+        <h3>Error Message</h3>
+        <p><strong>{{ERROR_MESSAGE}}</strong></p>
+      </div>
+
+      <div class="error-section">
+        <h3>Request Details</h3>
+        <div class="info-grid">
+          <div class="info-label">Email:</div>
+          <div class="info-value">{{REQUEST_EMAIL}}</div>
+
+          <div class="info-label">Astrato URL:</div>
+          <div class="info-value">{{REQUEST_ASTRATO_URL}}</div>
+
+          <div class="info-label">Client ID:</div>
+          <div class="info-value">{{REQUEST_CLIENT_ID_STATUS}}</div>
+
+          <div class="info-label">Client Secret:</div>
+          <div class="info-value">{{REQUEST_CLIENT_SECRET_STATUS}}</div>
+
+          <div class="info-label">Embed Link:</div>
+          <div class="info-value">{{REQUEST_EMBED_LINK}}</div>
+
+          <div class="info-label">Group IDs:</div>
+          <div class="info-value">{{REQUEST_GROUP_IDS}}</div>
+
+          <div class="info-label">Filter Parameters:</div>
+          <div class="info-value">{{REQUEST_FILTER_PARAMETERS}}</div>
+
+          <div class="info-label">Apply Pending Invites:</div>
+          <div class="info-value">{{REQUEST_APPLY_PENDING_INVITES}}</div>
+        </div>
+      </div>
+
+      {{#HAS_API_ERROR}}
+      <div class="error-section">
+        <h3>API Error Details</h3>
+        <div class="info-grid">
+          <div class="info-label">Status:</div>
+          <div class="info-value">{{API_STATUS}}</div>
+
+          <div class="info-label">Method:</div>
+          <div class="info-value">{{API_METHOD}}</div>
+
+          <div class="info-label">API URL:</div>
+          <div class="info-value">{{API_URL}}</div>
+
+          {{#API_MESSAGE}}
+          <div class="info-label">Message:</div>
+          <div class="info-value">{{API_MESSAGE}}</div>
+          {{/API_MESSAGE}} {{#API_CODE}}
+          <div class="info-label">Error Code:</div>
+          <div class="info-value">{{API_CODE}}</div>
+          {{/API_CODE}} {{#API_CORRELATION_ID}}
+          <div class="info-label">Correlation ID:</div>
+          <div class="info-value">{{API_CORRELATION_ID}}</div>
+          {{/API_CORRELATION_ID}}
+        </div>
+      </div>
+
+      <div class="error-section">
+        <h3>Full API Response</h3>
+        <pre>{{API_RESPONSE_JSON}}</pre>
+      </div>
+      {{/HAS_API_ERROR}}
+
+      <div class="button-group">
+        <a href="/login">← Back to Login</a>
+        <button onclick="copyErrorDetails()">📋 Copy Error Details</button>
+      </div>
+    </div>
+
+    <script>
+      const errorDetails = {{ERROR_DETAILS_JSON}};
+
+      function copyErrorDetails() {
+        navigator.clipboard
+          .writeText(JSON.stringify(errorDetails, null, 2))
+          .then(() => {
+            alert("Error details copied to clipboard!");
+          })
+          .catch((err) => {
+            console.error("Failed to copy:", err);
+            alert("Failed to copy error details");
+          });
+      }
+    </script>
+  </body>
+</html>
